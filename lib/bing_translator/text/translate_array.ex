@@ -14,7 +14,7 @@ defmodule BingTranslator.Text.TranslateArray do
   import XmlBuilder
 
   def run(params) do
-    case post("/TranslateArray", build(params), %{"Content-type" => "application/xml"}) do
+    case post("/TranslateArray2", build(params), %{"Content-type" => "application/xml"}) do
       {:ok, %{body: xml}} when is_binary(xml) ->
         parse(xml)
 
@@ -46,10 +46,15 @@ defmodule BingTranslator.Text.TranslateArray do
     generate(built)
   end
 
-  defp parse(xml) do
-    Floki.find(xml, "translatedtext")
-    |> Floki.text(sep: " ")
-    |> String.split()
+  defp parse(body) do
+    case Floki.parse_document(body) do
+      {:ok, xml} ->
+        Floki.find(xml, "translatedtext")
+        |> Enum.map(fn {key, _, val} -> val end)
+
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   defp erase(elems) do
